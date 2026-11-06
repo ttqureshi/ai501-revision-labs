@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vector Calculus Lab · AI 501 Notes 10</title>
+<meta name="description" content="Interactive companion to AI 501 Revision Notes 10: derivatives, gradients, Taylor series, convexity, gradient descent and SGD.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+/* Layout: a printed-textbook reading column; each section = recap, live figure, what to notice, check yourself. */
+:root{
+  --bg:#fbfaf7; --paper:#ffffff; --ink:#1c2128; --muted:#5a6370; --rule:#e2e0d9; --soft:#f3f2ed;
+  --accent:#1f4e8c; --accent-soft:#e8eef7; --trail:#d4500f; --good:#2a7a4a; --bad:#bf2f2a; --gold:#a8740c;
+  --contour:#9fb1c6; --fill-lo:#eef3f9; --fill-hi:#ffffff;
+  --serif:"Source Serif 4", "Latin Modern Roman", Georgia, serif;
+  --sans:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --num:"KaTeX_Main", "Latin Modern Roman", "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171c; --paper:#1b1f26; --ink:#e6e8eb; --muted:#9aa3ae; --rule:#2d333c; --soft:#20252d;
+  --accent:#8db4ea; --accent-soft:#1f2a3a; --trail:#ff8a50; --good:#6cc48f; --bad:#ff7a70; --gold:#e0b44c;
+  --contour:#4c5f78; --fill-lo:#182233; --fill-hi:#1b1f26; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#14171c; --paper:#1b1f26; --ink:#e6e8eb; --muted:#9aa3ae; --rule:#2d333c; --soft:#20252d;
+  --accent:#8db4ea; --accent-soft:#1f2a3a; --trail:#ff8a50; --good:#6cc48f; --bad:#ff7a70; --gold:#e0b44c;
+  --contour:#4c5f78; --fill-lo:#182233; --fill-hi:#1b1f26; color-scheme:dark;}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.6;
+  padding:40px max(16px,env(safe-area-inset-right,0px)) 80px max(16px,env(safe-area-inset-left,0px))}
+.col{max-width:820px;margin:0 auto}
+header{border-bottom:1px solid var(--rule);padding-bottom:28px;margin-bottom:12px}
+.kicker{font-family:var(--sans);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-size:clamp(32px,5.4vw,46px);line-height:1.1;margin:10px 0 14px;font-weight:700;text-wrap:balance}
+h2{font-size:clamp(24px,3.6vw,30px);line-height:1.2;margin:0;font-weight:700;text-wrap:balance}
+h3{font-family:var(--sans);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:600}
+p{margin:0 0 12px}
+.lede{font-size:20px;color:var(--muted);max-width:62ch}
+.example{margin-top:18px;background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:14px 18px;font-size:16px}
+.example table{border-collapse:collapse;margin:8px 0 4px;font-family:var(--num);font-size:16px}
+.example td,.example th{padding:2px 12px;text-align:center;border-bottom:1px solid var(--rule);font-weight:400}
+.example th{text-align:left;font-family:var(--serif);color:var(--muted)}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+nav.toc a{font-family:var(--sans);font-size:14px;color:var(--accent);text-decoration:none;border:1px solid var(--rule);background:var(--paper);padding:5px 12px;border-radius:999px}
+nav.toc a:hover{border-color:var(--accent)}
+section{padding:44px 0 8px;border-bottom:1px solid var(--rule)}
+.sec-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.sec-no{font-family:var(--sans);font-weight:600;color:var(--accent);font-size:15px}
+.where{font-family:var(--sans);font-size:13px;color:var(--muted);margin-left:auto}
+.recap{background:var(--accent-soft);border-radius:8px;padding:14px 18px;margin:0 0 18px}
+.recap p:last-child{margin-bottom:0}
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.recap .katex-display{margin:.6em 0}
+.figure{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.plot{position:relative;min-width:0}
+.plot canvas{display:block;width:100%;touch-action:none;border-radius:4px}
+.plot .xl{position:absolute;right:14px;bottom:4px;font-size:15px;color:var(--muted);pointer-events:none}
+.plot .yl{position:absolute;left:6px;top:2px;font-size:15px;color:var(--muted);pointer-events:none}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px 22px;align-items:end}
+.ctl{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ctl label{font-family:var(--sans);font-size:14px;color:var(--muted);display:block}
+.ctl label output{float:right}
+.ctl label output{font-family:var(--num);font-size:16px;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--accent);margin:6px 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,.chip{font-family:var(--sans);font-size:14px;padding:7px 14px;border-radius:6px;border:1px solid var(--rule);background:var(--paper);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+button:hover,.chip:hover{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--trail);outline-offset:2px}
+.check{display:flex;align-items:center;gap:8px;font-family:var(--sans);font-size:14px}
+.readout{background:var(--soft);border-radius:6px;padding:10px 14px;font-size:17px;overflow-x:auto;min-height:3em}
+.readout .katex-display{margin:.2em 0}
+.status{font-family:var(--sans);font-size:14px;font-weight:600}
+.status.good{color:var(--good)} .status.bad{color:var(--bad)}
+.notice{margin:18px 0 0}
+.notice ul{margin:6px 0 0;padding-left:1.2em}
+.notice li{margin:4px 0}
+details{margin:14px 0 26px;background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:10px 16px}
+summary{cursor:pointer;font-family:var(--sans);font-size:15px;font-weight:600;color:var(--accent)}
+details[open] summary{margin-bottom:8px}
+.iter{width:100%;border-collapse:collapse;font-family:var(--num);font-size:15px;font-variant-numeric:tabular-nums}
+.iter th{font-weight:400;color:var(--muted);text-align:right;padding:3px 8px;border-bottom:1px solid var(--rule)}
+.iter td{text-align:right;padding:2px 8px}
+.iter tr.last td{color:var(--trail)}
+.tablewrap{overflow-x:auto}
+.race{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.race .cap{font-family:var(--sans);font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-top:4px}
+.race .cap b{color:var(--ink)}
+.key{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+footer{padding-top:28px;font-size:15px;color:var(--muted)}
+@media (max-width:640px){body{font-size:17px}.race{grid-template-columns:1fr}.where{margin-left:0}}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="col">
+<header>
+  <div class="kicker">AI 501 · Mathematics for AI · Revision Notes 10 companion</div>
+  <h1>Vector Calculus Lab</h1>
+  <p class="lede">Six live figures that go with the notes. Change a slider and watch the mathematics respond. Each section has a short recap, the figure, what to notice, and one question to check yourself.</p>
+  <div class="example">
+    <strong>The running example.</strong> A Lahore delivery app predicts order time from distance with \(\hat y=\theta_0+\theta_1x\) and the loss
+    \[\mathcal L(\theta_0,\theta_1)=\frac{1}{2n}\sum_{i=1}^{n}\bigl(\theta_0+\theta_1x_i-y_i\bigr)^2 .\]
+    <table aria-label="Delivery data"><tr><th>distance \(x_i\) (km)</th><td>1</td><td>2</td><td>3</td><td>4</td></tr><tr><th>time \(y_i\) (min)</th><td>13</td><td>17</td><td>23</td><td>27</td></tr></table>
+    The best line is \(\theta_0=8,\ \theta_1=4.8\) with \(\mathcal L=0.1\). At the start \(\boldsymbol\theta=(0,0)\), \(\mathcal L=214.5\).
+  </div>
+  <nav class="toc" aria-label="Sections">
+    <a href="#derivative">1 · Derivative</a><a href="#gradient">2 · Gradient</a><a href="#taylor">3 · Taylor series</a><a href="#convex">4 · Convexity</a><a href="#descent">5 · Gradient descent</a><a href="#sgd">6 · SGD &amp; mini-batch</a>
+  </nav>
+</header>
+
+<!-- 1 DERIVATIVE -->
+<section id="derivative">
+  <div class="sec-head"><span class="sec-no">1</span><h2>The derivative is the limit of secant slopes</h2><span class="where">Notes §3 · Figure 1</span></div>
+  <div class="recap">
+    <p>The secant through \(P=(x_0,f(x_0))\) and \(Q=(x_0+\Delta x,\,f(x_0+\Delta x))\) has the average slope below. As \(Q\) slides to \(P\) it becomes the tangent, and its slope becomes the derivative:</p>
+    \[f'(x_0)=\lim_{\Delta x\to 0}\frac{f(x_0+\Delta x)-f(x_0)}{\Delta x}.\]
+  </div>
+  <div class="figure">
+    <div class="row" role="group" aria-label="Choose a function">
+      <button class="chip" data-f="sq" aria-pressed="true">\(x^2\)</button><button class="chip" data-f="cube" aria-pressed="false">\(x^3\)</button><button class="chip" data-f="sin" aria-pressed="false">\(\sin x\)</button>
+    </div>
+    <div class="plot" id="pDer"><canvas height="320"></canvas><span class="xl">\(x\)</span><span class="yl">\(y\)</span></div>
+    <div class="controls">
+      <div class="ctl"><label for="dX0">point \(x_0\) <output id="dX0o"></output></label><input id="dX0" type="range" min="-1.5" max="1.5" step="0.05" value="1"></div>
+      <div class="ctl"><label for="dDx">gap \(\Delta x\) <output id="dDxo"></output></label><input id="dDx" type="range" min="0" max="100" step="1" value="85"></div>
+    </div>
+    <div class="readout" id="dRead"></div>
+  </div>
+  <div class="notice"><h3>What to notice</h3><ul>
+    <li>For \(x^2\) the secant slope is exactly \(2x_0+\Delta x\): it misses the tangent by \(\Delta x\), so halving the gap halves the error.</li>
+    <li>The derivative uses only what happens <em>next to</em> \(x_0\). That is all the hiker in the fog can feel.</li></ul></div>
+  <details><summary>Check yourself</summary>
+    <p>For \(f(x)=x^3\) at \(x_0=1\), is the secant slope with \(\Delta x=0.1\) above or below \(f'(1)=3\)? Predict, then set the sliders and read it off.</p>
+    <p><em>Answer.</em> Above: \((1.1^3-1)/0.1=3.31\). The curve bends upward for \(x>0\), so a secant to the right is steeper than the tangent.</p>
+  </details>
+</section>
+
+<!-- 2 GRADIENT -->
+<section id="gradient">
+  <div class="sec-head"><span class="sec-no">2</span><h2>The gradient points straight uphill</h2><span class="where">Notes §4 · Figure 3</span></div>
+  <div class="recap">
+    <p>Stepping in a unit direction \(\mathbf u\), the rate of change of \(f\) is the directional derivative</p>
+    \[D_{\mathbf u}f=\nabla f^{\mathsf T}\mathbf u=\|\nabla f\|\cos\varphi .\]
+    <p>It is largest when \(\mathbf u\) points along \(\nabla f\) (\(\varphi=0^\circ\)), most negative along \(-\nabla f\), and zero at \(\varphi=90^\circ\), which is the direction of the contour.</p>
+  </div>
+  <div class="figure">
+    <div class="plot" id="pGrad"><canvas height="360"></canvas><span class="xl">\(x\)</span><span class="yl">\(y\)</span></div>
+    <div class="controls">
+      <div class="ctl"><label for="gAng">walking direction \(\mathbf u\) (angle) <output id="gAngO"></output></label><input id="gAng" type="range" min="0" max="359" step="1" value="200"></div>
+    </div>
+    <div class="readout" id="gRead"></div>
+  </div>
+  <div class="notice"><h3>What to notice</h3><ul>
+    <li>Contours of \(f(x,y)=x^2+3y^2\). <strong>Click or drag on the map</strong> to stand somewhere. The <span style="color:var(--bad)">red arrow</span> is \(\nabla f=(2x,\,6y)\); the <span style="color:var(--accent)">blue arrow</span> is your chosen \(\mathbf u\).</li>
+    <li>The red arrow always crosses the dashed contour at a right angle, but it does not point at the minimum. Steepest is a local fact.</li></ul></div>
+  <details><summary>Check yourself</summary>
+    <p>At \((1,1)\), which unit direction decreases \(f\) fastest, and at what rate?</p>
+    <p><em>Answer.</em> \(\nabla f=(2,6)\), so the direction is \(-(2,6)/\sqrt{40}\approx(-0.32,-0.95)\) and the rate is \(-\sqrt{40}\approx-6.32\).</p>
+  </details>
+</section>
+
+<!-- 3 TAYLOR -->
+<section id="taylor">
+  <div class="sec-head"><span class="sec-no">3</span><h2>A Taylor polynomial is a local map</h2><span class="where">Notes §7 · Figure 4</span></div>
+  <div class="recap">
+    <p>The Taylor polynomial of degree \(n\) around \(a\) matches the value and the first \(n\) derivatives of \(f\) at \(a\):</p>
+    \[T_n(x)=\sum_{k=0}^{n}\frac{f^{(k)}(a)}{k!}(x-a)^k .\]
+    <p>Here \(f(x)=\sin x+\cos x\), the example from the slides.</p>
+  </div>
+  <div class="figure">
+    <div class="plot" id="pTay"><canvas height="320"></canvas><span class="xl">\(x\)</span><span class="yl">\(y\)</span></div>
+    <div class="controls">
+      <div class="ctl"><label for="tN">degree \(n\) <output id="tNo"></output></label><input id="tN" type="range" min="0" max="12" step="1" value="2"></div>
+      <div class="ctl"><label for="tA">expansion point \(a\) <output id="tAo"></output></label><input id="tA" type="range" min="-3" max="3" step="0.1" value="0"></div>
+    </div>
+    <div class="readout" id="tRead"></div>
+  </div>
+  <div class="notice"><h3>What to notice</h3><ul>
+    <li>The shaded band is where \(|T_n-f|<0.1\). It is centred on \(a\) and widens as \(n\) grows.</li>
+    <li>Far from \(a\), even a high-degree polynomial shoots off. This is why gradient descent, which trusts only \(T_1\), must take small steps.</li></ul></div>
+  <details><summary>Check yourself</summary>
+    <p>Why is \(T_2\) exact for every quadratic function, however far \(x\) is from \(a\)?</p>
+    <p><em>Answer.</em> A quadratic has third and higher derivatives equal to zero, so every term after the second vanishes. This is why the second-order prediction of a gradient-descent step on the delivery loss is exact (Notes §7.2).</p>
+  </details>
+</section>
+
+<!-- 4 CONVEX -->
+<section id="convex">
+  <div class="sec-head"><span class="sec-no">4</span><h2>Convex means the chord lies above</h2><span class="where">Notes §8 · Figure 5</span></div>
+  <div class="recap">
+    <p>\(f\) is convex if, for all \(x_1,x_2\) and all \(\theta\in[0,1]\),</p>
+    \[f\bigl(\theta x_1+(1-\theta)x_2\bigr)\;\le\;\theta f(x_1)+(1-\theta)f(x_2).\]
+    <p>With \(\theta=\tfrac12\) and \(X\) equal to \(x_1\) or \(x_2\) with probability \(\tfrac12\) each, this is Jensen's inequality \(f(\mathbb E[X])\le\mathbb E[f(X)]\).</p>
+  </div>
+  <div class="figure">
+    <div class="row" role="group" aria-label="Choose a function">
+      <button class="chip" data-c="sq" aria-pressed="true">\(x^2\)</button><button class="chip" data-c="exp" aria-pressed="false">\(e^{x}\)</button><button class="chip" data-c="abs" aria-pressed="false">\(|x|\)</button><button class="chip" data-c="quart" aria-pressed="false">\(\tfrac14x^4-x^2+0.3x\)</button><button class="chip" data-c="sin" aria-pressed="false">\(\sin x\)</button>
+    </div>
+    <div class="plot" id="pCvx"><canvas height="320"></canvas><span class="xl">\(x\)</span><span class="yl">\(f(x)\)</span></div>
+    <div class="controls">
+      <div class="ctl"><label for="cX1">\(x_1\) <output id="cX1o"></output></label><input id="cX1" type="range" min="-2.4" max="2.4" step="0.05" value="-1.5"></div>
+      <div class="ctl"><label for="cX2">\(x_2\) <output id="cX2o"></output></label><input id="cX2" type="range" min="-2.4" max="2.4" step="0.05" value="1.4"></div>
+      <div class="ctl"><label for="cTh">\(\theta\) <output id="cTho"></output></label><input id="cTh" type="range" min="0" max="1" step="0.01" value="0.5"></div>
+    </div>
+    <div class="readout" id="cRead"></div>
+  </div>
+  <div class="notice"><h3>What to notice</h3><ul>
+    <li>Wherever the curve pokes above the chord, the segment is drawn red. For a convex function you can never make it red.</li>
+    <li>Try the quartic with \(x_1=-1.4,\ x_2=1.3\): the hump between the two valleys rises above the chord, and that hump is what creates the second, worse valley.</li></ul></div>
+  <details><summary>Check yourself</summary>
+    <p>For \(X\in\{1,3\}\) with equal probability and \(f(x)=x^2\), compute \(\mathbb E[f(X)]-f(\mathbb E[X])\). What is this quantity called?</p>
+    <p><em>Answer.</em> \(5-4=1\), the variance of \(X\). Jensen with \(f=x^2\) says a variance is never negative.</p>
+  </details>
+</section>
+
+<!-- 5 GD -->
+<section id="descent">
+  <div class="sec-head"><span class="sec-no">5</span><h2>Gradient descent in the delivery valley</h2><span class="where">Notes §9 · Figures 6–7</span></div>
+  <div class="recap">
+    <p>Each step moves against the gradient, updating both parameters at once:</p>
+    \[\boldsymbol\theta\leftarrow\boldsymbol\theta-\alpha\,\nabla\mathcal L(\boldsymbol\theta),\qquad
+      \nabla\mathcal L=\Bigl(\tfrac1n\textstyle\sum_i r_i,\ \tfrac1n\sum_i r_i x_i\Bigr),\quad r_i=\theta_0+\theta_1x_i-y_i .\]
+    <p>The Hessian \(H=\tfrac1n X^{\mathsf T}X=\begin{bmatrix}1&2.5\\2.5&7.5\end{bmatrix}\) has eigenvalues \(8.35\) and \(0.15\): a long, narrow ravine. Gradient descent converges only if \(\alpha<2/\lambda_{\max}\approx0.2395\).</p>
+  </div>
+  <div class="figure">
+    <div class="plot" id="pGD"><canvas height="380"></canvas><span class="xl">\(\theta_0\)</span><span class="yl">\(\theta_1\)</span></div>
+    <div class="controls">
+      <div class="ctl"><label for="gdA">step size \(\alpha\) <output id="gdAo"></output></label><input id="gdA" type="range" min="0.01" max="0.3" step="0.005" value="0.1"></div>
+      <label class="check"><input id="gdC" type="checkbox"> centre the feature (use \(x_i-\bar x\))</label>
+      <div class="row"><button id="gdStep">Step</button><button id="gdRun" class="primary">Run</button><button id="gdReset">Reset</button></div>
+    </div>
+    <div class="readout" id="gdRead"></div>
+    <div class="tablewrap"><table class="iter" id="gdTab" aria-label="Recent iterations"></table></div>
+  </div>
+  <div class="notice"><h3>What to notice</h3><ul>
+    <li>With \(\alpha=0.1\) the first two steps reproduce the table in the notes: \((2,\,5.6)\) then \((2.4,\,6.5)\), with the loss falling from \(214.5\) to \(2.82\).</li>
+    <li>At \(\alpha=0.2\) the path zig-zags across the ravine and then crawls along its floor (about 210 steps to get within \(0.01\)). At \(\alpha=0.24\) it diverges.</li>
+    <li>Tick <em>centre the feature</em>: the Hessian becomes \(\operatorname{diag}(1,\,1.25)\), the bowl turns round, the safe limit rises to \(1.6\), and \(\alpha=0.8\) arrives in 5 steps. Click the map to start elsewhere.</li></ul></div>
+  <details><summary>Check yourself</summary>
+    <p>For \(\mathcal L(\theta)=3\theta^2\), which \(\alpha\) reaches the minimum in one step, and above which \(\alpha\) does gradient descent diverge?</p>
+    <p><em>Answer.</em> A step gives \(\theta\leftarrow(1-6\alpha)\theta\). One step needs \(\alpha=1/6\); divergence when \(|1-6\alpha|>1\), i.e. \(\alpha>1/3=2/\lambda\) with \(\lambda=6\).</p>
+  </details>
+</section>
+
+<!-- 6 SGD -->
+<section id="sgd">
+  <div class="sec-head"><span class="sec-no">6</span><h2>Batch, stochastic and mini-batch, for the same work</h2><span class="where">Notes §10 · Figure 8</span></div>
+  <div class="recap">
+    <p>With per-order losses \(g_i\), the three methods differ only in how many orders each step averages over:</p>
+    \[\begin{aligned}\text{batch:}\quad &\mathbf w\leftarrow\mathbf w-\frac{\alpha}{n}\sum_{i=1}^{n}\nabla g_i &&(n\text{ orders per step})\\
+      \text{SGD:}\quad &\mathbf w\leftarrow\mathbf w-\alpha\,\nabla g_i &&(1\text{ order per step})\\
+      \text{mini-batch:}\quad &\mathbf w\leftarrow\mathbf w-\frac{\alpha}{k}\sum_{i\in\mathcal S}\nabla g_i &&(k\text{ orders per step})\end{aligned}\]
+    <p>Here there are \(n=40\) past orders (distance centred), so the noise has room to show. All three walkers read orders at the same rate.</p>
+  </div>
+  <div class="figure">
+    <div class="race">
+      <div><div class="plot" id="pB"><canvas height="230"></canvas></div><div class="cap"><span><span class="key" style="background:var(--accent)"></span><b>batch</b></span><span id="capB"></span></div></div>
+      <div><div class="plot" id="pS"><canvas height="230"></canvas></div><div class="cap"><span><span class="key" style="background:var(--bad)"></span><b>SGD</b></span><span id="capS"></span></div></div>
+      <div><div class="plot" id="pM"><canvas height="230"></canvas></div><div class="cap"><span><span class="key" style="background:var(--good)"></span><b>mini-batch</b></span><span id="capM"></span></div></div>
+    </div>
+    <div class="plot" id="pLoss"><canvas height="220"></canvas><span class="xl">epochs</span><span class="yl">\(\mathcal L-\mathcal L^\star\) (log scale)</span></div>
+    <div class="controls">
+      <div class="ctl"><label for="rA">step size \(\alpha\) <output id="rAo"></output></label><input id="rA" type="range" min="0.01" max="0.12" step="0.005" value="0.05"></div>
+      <div class="ctl"><label for="rK">mini-batch size \(k\) <output id="rKo"></output></label><input id="rK" type="range" min="2" max="20" step="1" value="8"></div>
+      <div class="row"><button id="rPlay" class="primary">Play</button><button id="rReset">Reset</button></div>
+    </div>
+    <div class="readout" id="rRead"></div>
+  </div>
+  <div class="notice"><h3>What to notice</h3><ul>
+    <li>After one epoch batch has taken 1 step, mini-batch \(n/k\) steps and SGD \(n=40\) steps, for the same amount of reading.</li>
+    <li>In the lower plot SGD drops fastest at first and then flattens into a noisy floor; mini-batch gets close to SGD's speed with much less jitter. Raise \(\alpha\) and SGD's floor rises.</li></ul></div>
+  <details><summary>Check yourself</summary>
+    <p>The slides write the mini-batch update with \(\tfrac1n\sum_{i=1}^{k}\). With \(n=50\,000\), \(k=32\), \(\alpha=0.1\), what step size does that really use?</p>
+    <p><em>Answer.</em> \(\alpha k/n=0.1\times 32/50\,000=6.4\times10^{-5}\), about 1500 times too small. Divide by \(k\), not \(n\).</p>
+  </details>
+</section>
+
+<footer>Companion to <em>Revision Notes 10: Vector Calculus and Gradient Descent</em>, AI 501 Mathematics for Artificial Intelligence, Fall 2026. Everything on this page is computed live in your browser.</footer>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+"use strict";
+const $ = id => document.getElementById(id);
+const DELIMS=[{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false}];
+renderMathInElement(document.body,{delimiters:DELIMS,throwOnError:false});
+const tex=(el,s,display=false)=>katex.render(s,el,{displayMode:display,throwOnError:false});
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---------- theme colours ----------
+let C={};
+const readC=()=>{const cs=getComputedStyle(document.documentElement);["bg","paper","ink","muted","rule","soft","accent","accent-soft","trail","good","bad","gold","contour","fill-lo","fill-hi"].forEach(k=>C[k]=cs.getPropertyValue("--"+k).trim());};
+readC();
+
+// ---------- number formatting in LaTeX style ----------
+function n2(v,d=2){ if(!Number.isFinite(v)) return "\\infty"; if(Math.abs(v)>=1e5) {const e=Math.floor(Math.log10(Math.abs(v)));return (v/10**e).toFixed(2)+"\\times10^{"+e+"}";} const s=v.toFixed(d); return s==="-0"+(d?"."+"0".repeat(d):"")?(0).toFixed(d):s; }
+const nice=(lo,hi,n=5)=>{const raw=(hi-lo)/n,e=10**Math.floor(Math.log10(raw)),st=[1,2,5,10].map(m=>m*e).find(m=>m>=raw);const out=[];for(let v=Math.ceil(lo/st)*st;v<=hi+1e-9;v+=st)out.push(+v.toFixed(6));return out;};
+const tick=v=>(Math.round(v*100)/100).toString().replace("-","−");
+
+// ---------- plot helper ----------
+class Plot{
+  constructor(id,xr,yr,m={l:44,r:30,t:26,b:30}){this.wrap=$(id);this.cv=this.wrap.querySelector("canvas");this.h=+this.cv.getAttribute("height");this.xr=xr;this.yr=yr;this.m=m;this.bg=null;}
+  size(){const dpr=window.devicePixelRatio||1;this.w=this.wrap.clientWidth;this.cv.style.height=this.h+"px";
+    const W=Math.round(this.w*dpr),H=Math.round(this.h*dpr);if(this.cv.width!==W||this.cv.height!==H){this.cv.width=W;this.cv.height=H;this.bg=null;}
+    this.ctx=this.cv.getContext("2d",{willReadFrequently:true});this.ctx.setTransform(dpr,0,0,dpr,0,0);this.dpr=dpr;return this;}
+  X(x){const{l,r}=this.m;return l+(x-this.xr[0])/(this.xr[1]-this.xr[0])*(this.w-l-r);}
+  Y(y){const{t,b}=this.m;return this.h-b-(y-this.yr[0])/(this.yr[1]-this.yr[0])*(this.h-t-b);}
+  iX(px){const{l,r}=this.m;return this.xr[0]+(px-l)/(this.w-l-r)*(this.xr[1]-this.xr[0]);}
+  iY(py){const{t,b}=this.m;return this.yr[0]+(this.h-b-py)/(this.h-t-b)*(this.yr[1]-this.yr[0]);}
+  clear(){const c=this.ctx;c.fillStyle=C.paper;c.fillRect(0,0,this.w,this.h);}
+  clip(fn){const c=this.ctx,{l,r,t,b}=this.m;c.save();c.beginPath();c.rect(l,t,this.w-l-r,this.h-t-b);c.clip();fn(c);c.restore();}
+  axes(xt,yt,opt={}){const c=this.ctx,{l,r,t,b}=this.m;
+    c.lineWidth=1;c.strokeStyle=C.rule;
+    if(opt.grid!==false){xt.forEach(v=>{c.beginPath();c.moveTo(this.X(v)+.5,t);c.lineTo(this.X(v)+.5,this.h-b);c.stroke();});
+      yt.forEach(v=>{c.beginPath();c.moveTo(l,this.Y(v)+.5);c.lineTo(this.w-r,this.Y(v)+.5);c.stroke();});}
+    c.strokeStyle=C.muted;c.globalAlpha=.6;c.strokeRect(l+.5,t+.5,this.w-l-r-1,this.h-t-b-1);c.globalAlpha=1;
+    c.fillStyle=C.muted;c.font="13px KaTeX_Main, 'Times New Roman', serif";
+    c.textAlign="center";c.textBaseline="top";xt.forEach(v=>c.fillText(opt.xf?opt.xf(v):tick(v),this.X(v),this.h-b+5));
+    c.textAlign="right";c.textBaseline="middle";yt.forEach(v=>c.fillText(opt.yf?opt.yf(v):tick(v),l-6,this.Y(v)));}
+  curve(f,color,width=2,dash=null){this.clip(c=>{c.strokeStyle=color;c.lineWidth=width;c.setLineDash(dash||[]);c.beginPath();let pen=false;
+    for(let px=this.m.l;px<=this.w-this.m.r;px+=1){const y=f(this.iX(px));if(!Number.isFinite(y)||Math.abs(y)>1e6){pen=false;continue;}const py=this.Y(y);pen?c.lineTo(px,py):c.moveTo(px,py);pen=true;}c.stroke();c.setLineDash([]);});}
+  dot(x,y,color,r=4.5){const c=this.ctx;c.fillStyle=color;c.beginPath();c.arc(this.X(x),this.Y(y),r,0,7);c.fill();}
+  // smooth contour lines by marching squares, cached as a bitmap
+  contours(f,levels,fillMin){ if(this.bg){this.ctx.putImageData(this.bg,0,0);return;}
+    const c=this.ctx,{l,r,t,b}=this.m,nx=Math.max(60,Math.round((this.w-l-r)/4)),ny=Math.max(40,Math.round((this.h-t-b)/4));
+    const xs=[],ys=[],V=[];for(let i=0;i<=nx;i++)xs.push(this.xr[0]+i/nx*(this.xr[1]-this.xr[0]));for(let j=0;j<=ny;j++)ys.push(this.yr[0]+j/ny*(this.yr[1]-this.yr[0]));
+    for(let j=0;j<=ny;j++){const row=[];for(let i=0;i<=nx;i++)row.push(f(xs[i],ys[j]));V.push(row);}
+    this.clear();
+    // soft fill: lighter far from the minimum
+    const lo=hex(C["fill-lo"]),hi=hex(C["fill-hi"]),top=levels[levels.length-1];
+    this.clip(cx=>{for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const v=(V[j][i]+V[j+1][i+1])/2;const s=Math.min(1,Math.log1p(Math.max(0,v-fillMin))/Math.log1p(top-fillMin));
+      const col=lo.map((q,k)=>Math.round(q+(hi[k]-q)*s));cx.fillStyle=`rgb(${col})`;const x0=this.X(xs[i]),y0=this.Y(ys[j+1]);cx.fillRect(x0,y0,this.X(xs[i+1])-x0+1,this.Y(ys[j])-y0+1);}});
+    this.clip(cx=>{cx.strokeStyle=C.contour;cx.lineWidth=1.1;cx.beginPath();
+      for(const L of levels)for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
+        const a=V[j][i]-L,bb=V[j][i+1]-L,cc=V[j+1][i+1]-L,d=V[j+1][i]-L,p=[];
+        const e=(v1,v2,x1,y1,x2,y2)=>{const s=v1/(v1-v2);p.push([x1+s*(x2-x1),y1+s*(y2-y1)]);};
+        if((a<0)!==(bb<0))e(a,bb,xs[i],ys[j],xs[i+1],ys[j]);
+        if((bb<0)!==(cc<0))e(bb,cc,xs[i+1],ys[j],xs[i+1],ys[j+1]);
+        if((cc<0)!==(d<0))e(cc,d,xs[i+1],ys[j+1],xs[i],ys[j+1]);
+        if((d<0)!==(a<0))e(d,a,xs[i],ys[j+1],xs[i],ys[j]);
+        for(let k=0;k+1<p.length;k+=2){cx.moveTo(this.X(p[k][0]),this.Y(p[k][1]));cx.lineTo(this.X(p[k+1][0]),this.Y(p[k+1][1]));}}
+      cx.stroke();});
+    this.drawAxesAfter&&this.drawAxesAfter();
+    this.bg=this.ctx.getImageData(0,0,this.cv.width,this.cv.height);}
+}
+function hex(h){h=h.replace("#","");if(h.length===3)h=[...h].map(x=>x+x).join("");const n=parseInt(h,16);return[(n>>16)&255,(n>>8)&255,n&255];}
+function arrow(c,x0,y0,x1,y1,color,w=2.4){c.strokeStyle=color;c.fillStyle=color;c.lineWidth=w;c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke();
+  const a=Math.atan2(y1-y0,x1-x0),s=9;c.beginPath();c.moveTo(x1,y1);c.lineTo(x1-s*Math.cos(a-.38),y1-s*Math.sin(a-.38));c.lineTo(x1-s*Math.cos(a+.38),y1-s*Math.sin(a+.38));c.closePath();c.fill();}
+function chips(selector,attr,onPick){document.querySelectorAll(selector).forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(selector).forEach(o=>o.setAttribute("aria-pressed",o===b?"true":"false"));onPick(b.dataset[attr]);}));}
+
+// =========== 1. Derivative ===========
+const DF={sq:{f:x=>x*x,d:x=>2*x,tex:"x^2",yr:[-1,5.2]},cube:{f:x=>x**3,d:x=>3*x*x,tex:"x^3",yr:[-4,6]},sin:{f:Math.sin,d:Math.cos,tex:"\\sin x",yr:[-1.6,1.6]}};
+let dKey="sq";const pDer=new Plot("pDer",[-2,3],DF.sq.yr);
+function drawDer(){const F=DF[dKey],x0=+$("dX0").value,dx=+(0.005*Math.pow(400,$("dDx").value/100)).toFixed(3);
+  pDer.yr=F.yr;pDer.size().clear();pDer.axes([-2,-1,0,1,2,3],nice(F.yr[0],F.yr[1]));
+  const y0=F.f(x0),y1=F.f(x0+dx),sec=(y1-y0)/dx,der=F.d(x0);
+  pDer.curve(x=>y0+der*(x-x0),C.good,2);pDer.curve(x=>y0+sec*(x-x0),C.accent,2,[7,5]);pDer.curve(F.f,C.trail,2.6);
+  pDer.clip(c=>{c.strokeStyle=C.muted;c.setLineDash([3,3]);c.lineWidth=1;c.beginPath();c.moveTo(pDer.X(x0),pDer.Y(y0));c.lineTo(pDer.X(x0+dx),pDer.Y(y0));c.lineTo(pDer.X(x0+dx),pDer.Y(y1));c.stroke();c.setLineDash([]);});
+  pDer.dot(x0,y0,C.ink,5);pDer.dot(x0+dx,y1,C.accent,5);
+  const c=pDer.ctx;c.font="italic 15px KaTeX_Math, serif";c.fillStyle=C.ink;c.textAlign="left";c.fillText("P",pDer.X(x0)+8,pDer.Y(y0)+14);c.fillStyle=C.accent;c.fillText("Q",pDer.X(x0+dx)+8,pDer.Y(y1)-4);
+  $("dX0o").textContent=x0.toFixed(2);$("dDxo").textContent=dx.toFixed(3);
+  tex($("dRead"),`\\underbrace{\\frac{f(${n2(x0)}+${n2(dx,3)})-f(${n2(x0)})}{${n2(dx,3)}}}_{\\color{${C.accent}}\\text{secant slope}}=${n2(sec,4)}\\qquad \\underbrace{f'(${n2(x0)})}_{\\color{${C.good}}\\text{tangent slope}}=${n2(der,4)}\\qquad \\text{gap}=${n2(sec-der,4)}`,true);}
+chips("[data-f]","f",k=>{dKey=k;drawDer();});["dX0","dDx"].forEach(id=>$(id).addEventListener("input",drawDer));
+
+// =========== 2. Gradient ===========
+const fG=(x,y)=>x*x+3*y*y;const pGrad=new Plot("pGrad",[-3.4,3.4],[-2.1,2.1]);let gp={x:1.2,y:0.9};
+pGrad.drawAxesAfter=()=>pGrad.axes([-3,-2,-1,0,1,2,3],[-2,-1,0,1,2],{grid:false});
+function drawGrad(){pGrad.size();pGrad.contours(fG,[0.25,1,2,3.5,5.5,8,11,14.5],0);
+  const c=pGrad.ctx,{x,y}=gp,g=[2*x,6*y],gn=Math.hypot(g[0],g[1]),deg=+$("gAng").value,an=deg*Math.PI/180,u=[Math.cos(an),Math.sin(an)],lev=fG(x,y);
+  pGrad.clip(cx=>{cx.setLineDash([6,4]);cx.strokeStyle=C.ink;cx.lineWidth=1.5;cx.beginPath();for(let t=0;t<=6.30;t+=.02){const X=Math.sqrt(lev)*Math.cos(t),Y=Math.sqrt(lev/3)*Math.sin(t);t?cx.lineTo(pGrad.X(X),pGrad.Y(Y)):cx.moveTo(pGrad.X(X),pGrad.Y(Y));}cx.stroke();cx.setLineDash([]);});
+  const px=pGrad.X(x),py=pGrad.Y(y),sc=Math.min(.3,1.0/Math.max(gn,1e-9));
+  if(gn>1e-6)arrow(c,px,py,pGrad.X(x+sc*g[0]),pGrad.Y(y+sc*g[1]),C.bad,2.8);
+  arrow(c,px,py,pGrad.X(x+u[0]),pGrad.Y(y+u[1]),C.accent,2.2);pGrad.dot(x,y,C.ink,5);pGrad.dot(0,0,C.gold,3.5);
+  const D=g[0]*u[0]+g[1]*u[1],cos=gn>1e-9?D/gn:0,phi=Math.acos(Math.max(-1,Math.min(1,cos)))*180/Math.PI;
+  let note="";if(Math.abs(cos)>.998)note=cos>0?"\\quad\\color{"+C.bad+"}\\textsf{steepest ascent}":"\\quad\\color{"+C.good+"}\\textsf{steepest descent}";else if(Math.abs(cos)<.02)note="\\quad\\color{"+C.good+"}\\textsf{along the contour}";
+  $("gAngO").textContent=deg+"°";
+  tex($("gRead"),`\\nabla f(${n2(x)},${n2(y)})=\\begin{pmatrix}${n2(g[0])}\\\\${n2(g[1])}\\end{pmatrix},\\quad \\|\\nabla f\\|=${n2(gn)},\\quad \\varphi=${phi.toFixed(0)}^\\circ,\\quad D_{\\mathbf u}f=\\|\\nabla f\\|\\cos\\varphi=${n2(D)}${note}`,true);}
+(()=>{let down=false;const cv=pGrad.cv,at=e=>{const r=cv.getBoundingClientRect();gp={x:Math.max(-3.2,Math.min(3.2,pGrad.iX(e.clientX-r.left))),y:Math.max(-2,Math.min(2,pGrad.iY(e.clientY-r.top)))};drawGrad();};
+  cv.addEventListener("pointerdown",e=>{down=true;cv.setPointerCapture(e.pointerId);at(e);});cv.addEventListener("pointermove",e=>{if(down)at(e);});cv.addEventListener("pointerup",()=>down=false);})();
+$("gAng").addEventListener("input",drawGrad);
+
+// =========== 3. Taylor ===========
+const fT=x=>Math.sin(x)+Math.cos(x);
+const dT=(k,a)=>{const s=[Math.sin(a),Math.cos(a),-Math.sin(a),-Math.cos(a)];return s[k%4]+s[(k+1)%4];};
+const fact=k=>k<2?1:k*fact(k-1);
+const Tn=(n,a,x)=>{let s=0;for(let k=0;k<=n;k++)s+=dT(k,a)*Math.pow(x-a,k)/fact(k);return s;};
+const pTay=new Plot("pTay",[-5,5],[-3,4]);
+function polyTex(n,a){const base=Math.abs(a)<1e-9?"x":`(x${a>0?"-":"+"}${n2(Math.abs(a),1)})`;let out="";
+  for(let k=0;k<=n;k++){const c=dT(k,a)/fact(k);if(Math.abs(c)<5e-5)continue;const mag=Math.abs(c);
+    const num=(k>1&&Math.abs(a)<1e-9)?`\\frac{1}{${fact(k)}}`:(Math.abs(mag-1)<1e-9&&k>0?"":n2(mag,3));
+    const term=k===0?(Math.abs(a)<1e-9?"1":n2(mag,3)):`${num}${k===1?base:base+"^{"+k+"}"}`;out+=(out===""?(c<0?"-":""):(c<0?"-":"+"))+term;}
+  return out||"0";}
+function drawTay(){const n=+$("tN").value,a=+$("tA").value;pTay.size().clear();
+  let L=a,R=a;while(L>-5&&Math.abs(Tn(n,a,L)-fT(L))<.1)L-=.01;while(R<5&&Math.abs(Tn(n,a,R)-fT(R))<.1)R+=.01;
+  pTay.clip(c=>{c.fillStyle=C["accent-soft"];c.fillRect(pTay.X(L),0,pTay.X(R)-pTay.X(L),pTay.h);});
+  pTay.axes([-4,-2,0,2,4],[-2,0,2,4]);pTay.curve(fT,C.ink,2.6);pTay.curve(x=>Tn(n,a,x),C.trail,2.4,[8,5]);pTay.dot(a,fT(a),C.trail,5.5);
+  $("tNo").textContent=n;$("tAo").textContent=a.toFixed(1);
+  tex($("tRead"),`T_{${n}}(x)=${polyTex(n,a)}\\qquad\\bigl|T_{${n}}-f\\bigr|<0.1\\ \\text{on}\\ [${n2(L)},\\,${n2(R)}]`,true);}
+["tN","tA"].forEach(id=>$(id).addEventListener("input",drawTay));
+
+// =========== 4. Convexity ===========
+const CF={sq:{f:x=>x*x,tex:"x^2",yr:[-0.5,6],cv:true},exp:{f:Math.exp,tex:"e^{x}",yr:[-0.5,8],cv:true},abs:{f:Math.abs,tex:"|x|",yr:[-0.5,3],cv:true},
+  quart:{f:x=>.25*x**4-x*x+.3*x,tex:"\\tfrac14x^4-x^2+0.3x",yr:[-2.2,2.5],cv:false},sin:{f:Math.sin,tex:"\\sin x",yr:[-1.4,1.4],cv:false}};
+let cKey="sq";const pCvx=new Plot("pCvx",[-2.5,2.5],CF.sq.yr);
+function drawCvx(){const F=CF[cKey],x1=+$("cX1").value,x2=+$("cX2").value,th=+$("cTh").value;pCvx.yr=F.yr;pCvx.size().clear();
+  pCvx.axes([-2,-1,0,1,2],nice(F.yr[0],F.yr[1]));pCvx.curve(F.f,C.trail,2.6);
+  const f1=F.f(x1),f2=F.f(x2),chord=x=>f1+(f2-f1)*(x-x1)/((x2-x1)||1e-9),lo=Math.min(x1,x2),hi=Math.max(x1,x2);let bad=false;
+  pCvx.clip(c=>{c.lineWidth=2.4;for(let px=pCvx.X(lo);px<pCvx.X(hi);px+=2){const x=pCvx.iX(px),viol=F.f(x)>chord(x)+1e-9;if(viol)bad=true;c.strokeStyle=viol?C.bad:C.ink;c.beginPath();c.moveTo(px,pCvx.Y(chord(x)));c.lineTo(px+2,pCvx.Y(chord(pCvx.iX(px+2))));c.stroke();}});
+  const xm=th*x1+(1-th)*x2,lhs=F.f(xm),rhs=th*f1+(1-th)*f2;
+  pCvx.clip(c=>{c.strokeStyle=C.muted;c.setLineDash([3,3]);c.lineWidth=1;c.beginPath();c.moveTo(pCvx.X(xm),pCvx.Y(lhs));c.lineTo(pCvx.X(xm),pCvx.Y(rhs));c.stroke();c.setLineDash([]);});
+  pCvx.dot(x1,f1,C.ink,4.5);pCvx.dot(x2,f2,C.ink,4.5);pCvx.dot(xm,rhs,C.accent,5);pCvx.dot(xm,lhs,lhs<=rhs+1e-9?C.good:C.bad,5);
+  $("cX1o").textContent=x1.toFixed(2);$("cX2o").textContent=x2.toFixed(2);$("cTho").textContent=th.toFixed(2);
+  const ok=lhs<=rhs+1e-9,verdict=bad?`\\color{${C.bad}}\\textsf{curve above the chord here: not convex}`:F.cv?`\\color{${C.good}}\\textsf{chord above the curve (this }f\\textsf{ is convex)}`:`\\color{${C.muted}}\\textsf{no violation on this segment; try others}`;
+  tex($("cRead"),`\\begin{gathered}\\underbrace{f(${n2(xm)})}_{\\text{curve}}=${n2(lhs,3)}\\ ${ok?"\\le":"\\color{"+C.bad+"}>"}\\ \\underbrace{${n2(th)}\\,f(${n2(x1)})+${n2(1-th)}\\,f(${n2(x2)})}_{\\text{chord}}=${n2(rhs,3)}\\\\[6pt]${verdict}\\end{gathered}`,true);}
+chips("[data-c]","c",k=>{cKey=k;drawCvx();});["cX1","cX2","cTh"].forEach(id=>$(id).addEventListener("input",drawCvx));
+
+// =========== 5. Gradient descent ===========
+const xs=[1,2,3,4],ys=[13,17,23,27];
+const gd={cen:false,path:[[0,0]],timer:null};
+const fx=i=>gd.cen?xs[i]-2.5:xs[i];
+const lossD=(a,b)=>{let s=0;for(let i=0;i<4;i++){const r=a+b*fx(i)-ys[i];s+=r*r;}return s/8;};
+const gradD=(a,b)=>{let p=0,q=0;for(let i=0;i<4;i++){const r=a+b*fx(i)-ys[i];p+=r;q+=r*fx(i);}return[p/4,q/4];};
+const cfg=()=>gd.cen?{xr:[-1,27],yr:[-2,12],opt:[20,4.8],lmax:1.25,xt:[0,5,10,15,20,25]}:{xr:[-1,13],yr:[-0.5,12],opt:[8,4.8],lmax:(8.5+Math.sqrt(67.25))/2,xt:[0,2,4,6,8,10,12]};
+let pGD=new Plot("pGD",cfg().xr,cfg().yr);
+pGD.drawAxesAfter=()=>pGD.axes(cfg().xt,[0,2,4,6,8,10,12],{grid:false});
+function drawGD(){const K=cfg();pGD.xr=K.xr;pGD.yr=K.yr;pGD.size();
+  const levels=[0.3,1,2.5,6,15,35,80,180,400,900].map(v=>v+0.1);pGD.contours(lossD,levels,0.1);
+  const c=pGD.ctx;
+  // optimum star
+  const ox=pGD.X(K.opt[0]),oy=pGD.Y(K.opt[1]);c.fillStyle=C.gold;c.beginPath();for(let k=0;k<10;k++){const r=k%2?3.6:8.5,a=-Math.PI/2+k*Math.PI/5;c.lineTo(ox+r*Math.cos(a),oy+r*Math.sin(a));}c.closePath();c.fill();
+  const cl=v=>Math.max(-1e4,Math.min(1e4,v));
+  pGD.clip(cx=>{cx.strokeStyle=C.trail;cx.lineWidth=2;cx.beginPath();gd.path.forEach((p,i)=>{const X=pGD.X(cl(p[0])),Y=pGD.Y(cl(p[1]));i?cx.lineTo(X,Y):cx.moveTo(X,Y);});cx.stroke();
+    cx.fillStyle=C.trail;gd.path.forEach(p=>{cx.beginPath();cx.arc(pGD.X(cl(p[0])),pGD.Y(cl(p[1])),2.8,0,7);cx.fill();});});
+  pGD.dot(gd.path[0][0],gd.path[0][1],C.ink,4.5);
+  const a=+$("gdA").value,lim=2/K.lmax,p=gd.path[gd.path.length-1],L=lossD(p[0],p[1]),dist=Math.hypot(p[0]-K.opt[0],p[1]-K.opt[1]);
+  $("gdAo").textContent=a.toFixed(3);
+  const st=(!Number.isFinite(L)||L>1e7)?`\\color{${C.bad}}\\textsf{diverged}`:dist<.01?`\\color{${C.good}}\\textsf{arrived (within 0.01)}`:a>=lim?`\\color{${C.bad}}\\alpha\\ge 2/\\lambda_{\\max}\\textsf{: will diverge}`:`\\color{${C.good}}\\alpha<2/\\lambda_{\\max}=${n2(lim,4)}\\textsf{: safe}`;
+  tex($("gdRead"),`k=${gd.path.length-1},\\quad \\boldsymbol\\theta=(${n2(p[0],3)},\\ ${n2(p[1],3)}),\\quad \\mathcal L=${n2(L,3)}\\qquad ${st}`,true);
+  const rows=gd.path.slice(-6),start=gd.path.length-rows.length;
+  let h=`<tr><th>step \\(k\\)</th><th>\\(\\theta_0\\)</th><th>\\(\\theta_1\\)</th><th>\\(\\partial\\mathcal L/\\partial\\theta_0\\)</th><th>\\(\\partial\\mathcal L/\\partial\\theta_1\\)</th><th>\\(\\mathcal L\\)</th></tr>`;
+  rows.forEach((q,i)=>{const g=gradD(q[0],q[1]),fmt=v=>Number.isFinite(v)?(Math.abs(v)>=1e5?v.toExponential(2):v.toFixed(3)).replace("-","−"):"∞";
+    h+=`<tr class="${i===rows.length-1?"last":""}"><td>${start+i}</td><td>${fmt(q[0])}</td><td>${fmt(q[1])}</td><td>${fmt(g[0])}</td><td>${fmt(g[1])}</td><td>${fmt(lossD(q[0],q[1]))}</td></tr>`;});
+  $("gdTab").innerHTML=h;renderMathInElement($("gdTab"),{delimiters:DELIMS});}
+function gdStep(){const p=gd.path[gd.path.length-1],g=gradD(p[0],p[1]),a=+$("gdA").value,q=[p[0]-a*g[0],p[1]-a*g[1]];gd.path.push(q);
+  const L=lossD(q[0],q[1]),K=cfg();if(!Number.isFinite(L)||L>1e9||Math.hypot(q[0]-K.opt[0],q[1]-K.opt[1])<1e-3||gd.path.length>800)gdStop();drawGD();}
+function gdStop(){if(gd.timer){clearInterval(gd.timer);gd.timer=null;$("gdRun").textContent="Run";}}
+$("gdStep").onclick=()=>{gdStop();gdStep();};
+$("gdRun").onclick=()=>{if(gd.timer){gdStop();return;}$("gdRun").textContent="Pause";gd.timer=setInterval(gdStep,reduce?220:70);};
+$("gdReset").onclick=()=>{gdStop();gd.path=[gd.path[0]];drawGD();};
+$("gdA").addEventListener("input",()=>{gdStop();gd.path=[gd.path[0]];drawGD();});
+$("gdC").addEventListener("change",e=>{gdStop();gd.cen=e.target.checked;gd.path=[[0,0]];$("gdA").max=gd.cen?"1.7":"0.3";$("gdA").value=gd.cen?"0.8":"0.1";pGD.bg=null;drawGD();});
+pGD.cv.addEventListener("pointerdown",e=>{const r=pGD.cv.getBoundingClientRect();gdStop();gd.path=[[pGD.iX(e.clientX-r.left),pGD.iY(e.clientY-r.top)]];drawGD();});
+
+// =========== 6. SGD race ===========
+function lcg(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+const N=40,DATA=(()=>{const r=lcg(7),X=[],Y=[];for(let i=0;i<N;i++){const x=.5+5.5*r();let u=0;for(let k=0;k<6;k++)u+=r();X.push(x);Y.push(8+4.8*x+(u-3)*3.4);}
+  const m=X.reduce((a,b)=>a+b)/N;return{z:X.map(v=>v-m),y:Y};})();
+const opt=(()=>{const ym=DATA.y.reduce((a,b)=>a+b)/N;let a=0,b=0;for(let i=0;i<N;i++){a+=DATA.z[i]**2;b+=DATA.z[i]*(DATA.y[i]-ym);}return[ym,b/a];})();
+const lossR=(a,b)=>{let s=0;for(let i=0;i<N;i++){const r=a+b*DATA.z[i]-DATA.y[i];s+=r*r;}return s/(2*N);};const Lstar=lossR(opt[0],opt[1]);
+const rx=[opt[0]-16,opt[0]+6],ry=[opt[1]-7,opt[1]+4],small={l:6,r:6,t:6,b:6};
+const PR={B:new Plot("pB",rx,ry,small),S:new Plot("pS",rx,ry,small),M:new Plot("pM",rx,ry,small)};
+const pLoss=new Plot("pLoss",[0,6],[-3,3],{l:48,r:56,t:30,b:30});
+const COL={B:"accent",S:"bad",M:"good"};let race,rTimer=null;const EPOCHS=6;
+const shuffle=r=>{const p=[...Array(N).keys()];for(let i=N-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]];}return p;};
+function raceInit(){const r=lcg(11);race={read:0,r,W:{B:{k:N},S:{k:1},M:{k:+$("rK").value}}};
+  for(const w of Object.values(race.W)){w.t=[opt[0]-14,opt[1]-5];w.path=[[...w.t]];w.hist=[[0,lossR(w.t[0],w.t[1])-Lstar]];w.acc=[0,0];w.cnt=0;w.ord=shuffle(r);w.pos=0;w.up=0;}}
+function readOne(){const a=+$("rA").value;race.read++;
+  for(const w of Object.values(race.W)){const i=w.ord[w.pos++];if(w.pos===N){w.pos=0;w.ord=shuffle(race.r);}
+    const res=w.t[0]+w.t[1]*DATA.z[i]-DATA.y[i];w.acc[0]+=res;w.acc[1]+=res*DATA.z[i];
+    if(++w.cnt===w.k){w.t=[w.t[0]-a*w.acc[0]/w.k,w.t[1]-a*w.acc[1]/w.k];w.path.push([...w.t]);w.acc=[0,0];w.cnt=0;w.up++;}
+    if(race.read%2===0)w.hist.push([race.read/N,lossR(w.t[0],w.t[1])-Lstar]);}}
+function drawRace(){
+  for(const k in PR){const P=PR[k].size(),w=race.W[k],col=C[COL[k]];P.contours(lossR,[.5,2,5,11,22,40,65,100].map(v=>v+Lstar),Lstar);
+    P.clip(c=>{c.strokeStyle=col;c.lineWidth=1.8;c.beginPath();w.path.forEach((p,i)=>i?c.lineTo(P.X(p[0]),P.Y(p[1])):c.moveTo(P.X(p[0]),P.Y(p[1])));c.stroke();});
+    P.dot(opt[0],opt[1],C.gold,4);P.dot(w.t[0],w.t[1],col,4.5);
+    $("cap"+k).textContent=`${w.up} update${w.up===1?"":"s"}`;}
+  const P=pLoss.size();P.clear();P.axes([0,1,2,3,4,5],[-3,-2,-1,0,1,2,3],{yf:v=>String(10**v)});
+  for(const k of ["B","M","S"]){const w=race.W[k];P.clip(c=>{c.strokeStyle=C[COL[k]];c.lineWidth=2;c.beginPath();w.hist.forEach((h,i)=>{const X=P.X(h[0]),Y=P.Y(Math.log10(Math.max(h[1],1e-3)));i?c.lineTo(X,Y):c.moveTo(X,Y);});c.stroke();});}
+  $("rAo").textContent=(+$("rA").value).toFixed(3);$("rKo").textContent=$("rK").value;
+  const W=race.W,gap=w=>n2(lossR(w.t[0],w.t[1])-Lstar,3);
+  tex($("rRead"),`\\text{epoch } ${n2(race.read/N,2)}:\\quad \\mathcal L-\\mathcal L^\\star=\\ {\\color{${C.accent}}${gap(W.B)}}\\ \\text{(batch)},\\ \\ {\\color{${C.bad}}${gap(W.S)}}\\ \\text{(SGD)},\\ \\ {\\color{${C.good}}${gap(W.M)}}\\ \\text{(mini-batch, }k=${$("rK").value})`,true);}
+function rStop(){if(rTimer){clearInterval(rTimer);rTimer=null;$("rPlay").textContent="Play";}}
+$("rPlay").onclick=()=>{if(rTimer){rStop();return;}if(race.read>=N*EPOCHS)raceInit();$("rPlay").textContent="Pause";
+  rTimer=setInterval(()=>{for(let s=0;s<2;s++)readOne();drawRace();if(race.read>=N*EPOCHS)rStop();},reduce?150:45);};
+$("rReset").onclick=()=>{rStop();raceInit();drawRace();};
+["rA","rK"].forEach(id=>$(id).addEventListener("input",()=>{rStop();raceInit();drawRace();}));
+
+// =========== boot ===========
+raceInit();for(let i=0;i<N;i++)readOne();      // open with one epoch already run
+gd.path=[[0,0]];for(let i=0;i<2;i++){const p=gd.path[gd.path.length-1],g=gradD(p[0],p[1]);gd.path.push([p[0]-.1*g[0],p[1]-.1*g[1]]);}
+function drawAll(){readC();[pGrad,pGD,...Object.values(PR)].forEach(p=>p.bg=null);drawDer();drawGrad();drawTay();drawCvx();drawGD();drawRace();}
+drawAll();
+document.fonts&&document.fonts.ready.then(drawAll);
+let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(drawAll,150);});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",drawAll);
+});
+</script>
+</body>
+</html>
